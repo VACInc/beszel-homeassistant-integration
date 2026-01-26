@@ -58,16 +58,17 @@ class BeszelApiClient:
         """Fetch the latest stats for a specific system."""
         await self._ensure_auth()
         try:
-            records = await asyncio.to_thread(
-                self._client.collection("system_stats").get_full_list,
-                batch=1,
+            result = await asyncio.to_thread(
+                self._client.collection("system_stats").get_list,
+                1,
+                1,
                 query_params={
                     "filter": f'system="{system_id}"',
                     "sort": "-created",
                 },
             )
-            if records:
-                return vars(records[0]).get("stats", {})
+            if result.items:
+                return vars(result.items[0]).get("stats", {})
             return None
         except ClientResponseError as e:
             if e.status == 401 or e.status == 403:
