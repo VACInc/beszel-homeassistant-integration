@@ -18,6 +18,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
     ATTR_AGENT_VERSION,
+    ATTR_BATTERY,
     ATTR_CORES,
     ATTR_CPU_MODEL,
     ATTR_CPU_PERCENT,
@@ -75,6 +76,42 @@ def _array_value(data, key, index, precision=2):
         return round(float(value), precision)
     except (ValueError, TypeError):
         return None
+
+
+def _has_battery(data):
+    """Return True when Beszel reports a real battery value."""
+    values = data.get(ATTR_BATTERY)
+    return (
+        isinstance(values, (list, tuple))
+        and len(values) >= 2
+        and list(values[:2]) != [0, 0]
+    )
+
+
+def _battery_percent(data):
+    """Return the Beszel battery percentage."""
+    if not _has_battery(data):
+        return None
+    value = _array_value(data, ATTR_BATTERY, 0, precision=0)
+    return int(value) if value is not None else None
+
+
+def _battery_state(data):
+    """Return the Beszel battery charge state name."""
+    if not _has_battery(data):
+        return None
+    states = {
+        0: "Unknown",
+        1: "Empty",
+        2: "Full",
+        3: "Charging",
+        4: "Discharging",
+        5: "Idle",
+    }
+    value = _array_value(data, ATTR_BATTERY, 1, precision=0)
+    if value is None:
+        return None
+    return states.get(int(value), "Unknown")
 
 
 SENSOR_TYPES_INFO = [
@@ -237,6 +274,30 @@ SENSOR_TYPES_STATS = [
         True,
         None,
         lambda data: _array_value(data, ATTR_DISK_IO_STATS, 5),
+    ),
+    (
+        "battery_percent",
+        "Battery Level",
+        PERCENTAGE,
+        SensorDeviceClass.BATTERY,
+        SensorStateClass.MEASUREMENT,
+        "mdi:battery",
+        "stats",
+        True,
+        None,
+        _battery_percent,
+    ),
+    (
+        "battery_state",
+        "Battery State",
+        None,
+        SensorDeviceClass.ENUM,
+        None,
+        "mdi:battery-charging",
+        "stats",
+        True,
+        ["Unknown", "Empty", "Full", "Charging", "Discharging", "Idle"],
+        _battery_state,
     ),
     (
         ATTR_MEM_BUFF_CACHE_GB,

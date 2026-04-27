@@ -17,6 +17,7 @@ Monitor system statistics from Beszel servers in Home Assistant. This integratio
 
 - **Agent Information**: Version tracking and system identification
 - **CPU Monitoring**: Cores, model, threads, and usage percentage
+- **Battery Monitoring**: Host battery level and charge state
 - **Disk Statistics**: Read/write speeds, total space, usage, utilization percentage, and Beszel 0.18.7 disk I/O metrics
 - **GPU Support**: Multi-GPU statistics including memory, power draw, and package power
 - **Kernel Information**: Version and system details
@@ -66,6 +67,8 @@ cp -r custom_components/beszel/* config/custom_components/beszel/
 ```yaml
 # Example sensors created automatically
 sensor.beszel_server_cpu_usage
+sensor.beszel_server_battery_level
+sensor.beszel_server_battery_state
 sensor.beszel_server_memory_percent
 sensor.beszel_server_disk_usage
 sensor.beszel_server_disk_io_utilization
