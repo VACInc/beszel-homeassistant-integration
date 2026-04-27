@@ -43,16 +43,22 @@ class BeszelApiClient:
         ):
             return
 
-        try:
-            await asyncio.to_thread(
-                self._client.collection("users").auth_with_password,
-                self._username,
-                self._password,
-            )
-            self._is_authenticated = True
-        except ClientResponseError as e:
-            self._is_authenticated = False
-            raise BeszelApiAuthError("Authentication failed") from e
+        collections = ("_superusers", "users")
+        last_error = None
+        for collection in collections:
+            try:
+                await asyncio.to_thread(
+                    self._client.collection(collection).auth_with_password,
+                    self._username,
+                    self._password,
+                )
+                self._is_authenticated = True
+                return
+            except ClientResponseError as exc:
+                last_error = exc
+
+        self._is_authenticated = False
+        raise BeszelApiAuthError("Authentication failed") from last_error
 
     async def async_get_latest_system_stats(self, system_id):
         """Fetch the latest stats for a specific system."""
