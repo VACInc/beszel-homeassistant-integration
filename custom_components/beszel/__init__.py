@@ -1,8 +1,5 @@
 """The Beszel integration."""
 
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
-
 from .api import BeszelApiClient
 from .const import DEFAULT_UPDATE_INTERVAL_SECONDS, DOMAIN, PLATFORMS
 from .coordinator import BeszelDataUpdateCoordinator

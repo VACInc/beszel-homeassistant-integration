@@ -1,7 +1,5 @@
 """Sensor platform for Beszel."""
 
-import logging
-
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
@@ -27,8 +25,10 @@ from .const import (
     ATTR_DISK_READ_PS_MB,
     ATTR_DISK_TOTAL_GB,
     ATTR_DISK_USED_GB,
+    ATTR_DISK_IO_STATS,
     ATTR_DISK_WRITE_PS_MB,
     ATTR_EXTRA_FS,
+    ATTR_FS_DISK_IO_STATS,
     ATTR_FS_DISK_PERCENT,
     ATTR_FS_DISK_READ_PS_MB,
     ATTR_FS_DISK_TOTAL_GB,
@@ -38,6 +38,7 @@ from .const import (
     ATTR_GPU_MEM_TOTAL_MB,
     ATTR_GPU_MEM_USED_MB,
     ATTR_GPU_NAME,
+    ATTR_GPU_POWER_PACKAGE_W,
     ATTR_GPU_POWER_W,
     ATTR_GPU_USAGE_PERCENT,
     ATTR_KERNEL_VERSION,
@@ -60,7 +61,21 @@ from .const import (
     SECONDS_PER_HOUR,
     SECONDS_PER_MINUTE,
 )
-from .coordinator import BeszelDataUpdateCoordinator
+
+
+def _array_value(data, key, index, precision=2):
+    """Return a rounded value from a Beszel array metric."""
+    values = data.get(key)
+    if not isinstance(values, (list, tuple)) or len(values) <= index:
+        return None
+    value = values[index]
+    if value is None:
+        return None
+    try:
+        return round(float(value), precision)
+    except (ValueError, TypeError):
+        return None
+
 
 SENSOR_TYPES_INFO = [
     (
@@ -150,6 +165,78 @@ SENSOR_TYPES_STATS = [
         "mdi:arrow-up-bold-circle-outline",
         "stats",
         True,
+    ),
+    (
+        "disk_read_time_percent",
+        "Disk Read Time",
+        PERCENTAGE,
+        SensorDeviceClass.POWER_FACTOR,
+        SensorStateClass.MEASUREMENT,
+        "mdi:harddisk",
+        "stats",
+        True,
+        None,
+        lambda data: _array_value(data, ATTR_DISK_IO_STATS, 0),
+    ),
+    (
+        "disk_write_time_percent",
+        "Disk Write Time",
+        PERCENTAGE,
+        SensorDeviceClass.POWER_FACTOR,
+        SensorStateClass.MEASUREMENT,
+        "mdi:harddisk",
+        "stats",
+        True,
+        None,
+        lambda data: _array_value(data, ATTR_DISK_IO_STATS, 1),
+    ),
+    (
+        "disk_io_utilization_percent",
+        "Disk I/O Utilization",
+        PERCENTAGE,
+        SensorDeviceClass.POWER_FACTOR,
+        SensorStateClass.MEASUREMENT,
+        "mdi:harddisk",
+        "stats",
+        True,
+        None,
+        lambda data: _array_value(data, ATTR_DISK_IO_STATS, 2),
+    ),
+    (
+        "disk_read_await_ms",
+        "Disk Read Await",
+        UnitOfTime.MILLISECONDS,
+        SensorDeviceClass.DURATION,
+        SensorStateClass.MEASUREMENT,
+        "mdi:timer-outline",
+        "stats",
+        True,
+        None,
+        lambda data: _array_value(data, ATTR_DISK_IO_STATS, 3),
+    ),
+    (
+        "disk_write_await_ms",
+        "Disk Write Await",
+        UnitOfTime.MILLISECONDS,
+        SensorDeviceClass.DURATION,
+        SensorStateClass.MEASUREMENT,
+        "mdi:timer-outline",
+        "stats",
+        True,
+        None,
+        lambda data: _array_value(data, ATTR_DISK_IO_STATS, 4),
+    ),
+    (
+        "disk_weighted_io_percent",
+        "Disk Weighted I/O",
+        PERCENTAGE,
+        SensorDeviceClass.POWER_FACTOR,
+        SensorStateClass.MEASUREMENT,
+        "mdi:harddisk",
+        "stats",
+        True,
+        None,
+        lambda data: _array_value(data, ATTR_DISK_IO_STATS, 5),
     ),
     (
         ATTR_MEM_BUFF_CACHE_GB,
@@ -335,6 +422,66 @@ def _create_extra_fs_sensors(coordinator, system_id, system_name, fs_name):
             "mdi:arrow-up-bold-circle-outline",
             True,
         ),
+        (
+            "read_time_percent",
+            f"{fs_name} Read Time",
+            PERCENTAGE,
+            SensorDeviceClass.POWER_FACTOR,
+            SensorStateClass.MEASUREMENT,
+            "mdi:harddisk",
+            True,
+            lambda data: _array_value(data, ATTR_FS_DISK_IO_STATS, 0),
+        ),
+        (
+            "write_time_percent",
+            f"{fs_name} Write Time",
+            PERCENTAGE,
+            SensorDeviceClass.POWER_FACTOR,
+            SensorStateClass.MEASUREMENT,
+            "mdi:harddisk",
+            True,
+            lambda data: _array_value(data, ATTR_FS_DISK_IO_STATS, 1),
+        ),
+        (
+            "io_utilization_percent",
+            f"{fs_name} I/O Utilization",
+            PERCENTAGE,
+            SensorDeviceClass.POWER_FACTOR,
+            SensorStateClass.MEASUREMENT,
+            "mdi:harddisk",
+            True,
+            lambda data: _array_value(data, ATTR_FS_DISK_IO_STATS, 2),
+        ),
+        (
+            "read_await_ms",
+            f"{fs_name} Read Await",
+            UnitOfTime.MILLISECONDS,
+            SensorDeviceClass.DURATION,
+            SensorStateClass.MEASUREMENT,
+            "mdi:timer-outline",
+            True,
+            lambda data: _array_value(data, ATTR_FS_DISK_IO_STATS, 3),
+        ),
+        (
+            "write_await_ms",
+            f"{fs_name} Write Await",
+            UnitOfTime.MILLISECONDS,
+            SensorDeviceClass.DURATION,
+            SensorStateClass.MEASUREMENT,
+            "mdi:timer-outline",
+            True,
+            lambda data: _array_value(data, ATTR_FS_DISK_IO_STATS, 4),
+        ),
+        (
+            "weighted_io_percent",
+            f"{fs_name} Weighted I/O",
+            PERCENTAGE,
+            SensorDeviceClass.POWER_FACTOR,
+            SensorStateClass.MEASUREMENT,
+            "mdi:harddisk",
+            True,
+            lambda data: _array_value(data, ATTR_FS_DISK_IO_STATS, 5),
+        ),
     ]
 
     sensors = []
@@ -399,6 +546,15 @@ def _create_gpu_sensors(
             SensorDeviceClass.POWER,
             SensorStateClass.MEASUREMENT,
             "mdi:lightning-bolt",
+            True,
+        ),
+        (
+            ATTR_GPU_POWER_PACKAGE_W,
+            f"{gpu_name_display} Package Power",
+            UnitOfPower.WATT,
+            SensorDeviceClass.POWER,
+            SensorStateClass.MEASUREMENT,
+            "mdi:lightning-bolt-outline",
             True,
         ),
         (

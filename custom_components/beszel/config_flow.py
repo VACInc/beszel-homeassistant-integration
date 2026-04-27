@@ -2,7 +2,7 @@
 
 import logging
 
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.config_entries import ConfigFlow
 from pocketbase.utils import ClientResponseError
 import voluptuous as vol
 

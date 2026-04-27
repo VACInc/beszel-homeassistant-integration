@@ -17,8 +17,8 @@ Monitor system statistics from Beszel servers in Home Assistant. This integratio
 
 - **Agent Information**: Version tracking and system identification
 - **CPU Monitoring**: Cores, model, threads, and usage percentage
-- **Disk Statistics**: Read/write speeds, total space, usage, and utilization percentage
-- **GPU Support**: Multi-GPU statistics including memory and power consumption
+- **Disk Statistics**: Read/write speeds, total space, usage, utilization percentage, and Beszel 0.18.7 disk I/O metrics
+- **GPU Support**: Multi-GPU statistics including memory, power draw, and package power
 - **Kernel Information**: Version and system details
 - **Memory Tracking**: Buffer/cache, percentage, total, usage, and ZFS ARC
 - **Network Statistics**: Received/sent speeds and throughput
@@ -68,7 +68,9 @@ cp -r custom_components/beszel/* config/custom_components/beszel/
 sensor.beszel_server_cpu_usage
 sensor.beszel_server_memory_percent
 sensor.beszel_server_disk_usage
+sensor.beszel_server_disk_io_utilization
 sensor.beszel_server_gpu_0_usage
+sensor.beszel_server_gpu_0_package_power
 sensor.beszel_server_filesystem_root_percent
 ```
 

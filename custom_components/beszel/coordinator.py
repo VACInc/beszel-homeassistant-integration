@@ -4,10 +4,9 @@ import asyncio
 import logging
 from datetime import timedelta
 
-from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .api import BeszelApiClient, BeszelApiAuthError
+from .api import BeszelApiAuthError
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
@@ -38,26 +37,18 @@ class BeszelDataUpdateCoordinator(DataUpdateCoordinator):
                 return {}
 
             all_system_data = {}
-            tasks = []
-            for system in self.systems_list:
-                system_id = system.get("id")
-                if not system_id:
-                    continue
-
-                tasks.append(
-                    self._fetch_individual_system_data(
-                        system_id, system.get("name", system_id)
-                    )
+            systems_with_ids = [system for system in self.systems_list if system.get("id")]
+            tasks = [
+                self._fetch_individual_system_data(
+                    system["id"], system.get("name", system["id"])
                 )
+                for system in systems_with_ids
+            ]
 
             results = await asyncio.gather(*tasks, return_exceptions=True)
 
-            for i, system in enumerate(self.systems_list):
-                system_id = system.get("id")
-                if not system_id:
-                    continue
-
-                result = results[i]
+            for system, result in zip(systems_with_ids, results, strict=False):
+                system_id = system["id"]
                 if isinstance(result, Exception):
                     _LOGGER.error(
                         "Error fetching data for system %s: %s", system_id, result
